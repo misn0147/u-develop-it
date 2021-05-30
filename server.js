@@ -21,37 +21,73 @@ const db = mysql.createConnection(
     console.log('Connected to the election database.')
 );
 
-// db.query(`SELECT * FROM candidates`, (err, rows) => {
-//     console.log(rows);
-// });
+// Gets all candidates
+app.get('/api/candidates', (req, res) => {
+    const sql = `SELECT * FROM candidates`;
 
-// GET a single candidate
-// db.query(`SELECT * FROM candidates WHERE id = 1`, (err, row) => {
-//     if (err) {
-//         console.log(err);
-//     }
-//     console.log(row);
-// });
+    db.query(sql, (err, rows) => {
+        if (err) {
+            res.status(500).json({error: err.message});
+            return;
+        }
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
+});
+
+
+// Get a single candidate
+app.get('/api/candidate/:id', (req, res) => {
+    const sql = `SELECT * FROM candidates WHERE id = ?`;
+    const params = [req.params.id];
+
+    db.query(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
 
 // Delete a candidate
-// db.query(`DELETE FROM candidates WHERE id = ?`, 1, (err, result) => {
+app.delete('/api/candidate/:id', (req, res) => {
+    const sql = `DELETE FROM candidates WHERE id = ?`;
+    const params = [req.params.id];
+
+    db.query(sql, params, (err, result) => {
+        if (err) {
+            res.statusMessage(400).json({ error: res.message });
+        } else if (!result.affectedRows) {
+            res.json({
+                message: 'Candidate not found'
+            });
+        } else {
+            res.json({
+                message: 'successfully deleted',
+                changes: result.affectedRows,
+                id: req.params.id
+            });
+        }
+    });
+});
+
+// Create a candidate
+// const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected) 
+//                 VALUES (?,?,?,?)`;
+// const params = [1, 'Ronald', 'Firbank', 1];
+
+// db. query(sql, params, (err, result) => {
 //     if (err) {
 //         console.log(err);
 //     }
 //     console.log(result);
-// })
-
-// Create a candidate
-const sql = `INSERT INTO candidates (id, first_name, last_name, industry_connected) 
-                VALUES (?,?,?,?)`;
-const params = [1, 'Ronald', 'Firbank', 1];
-
-db. query(sql, params, (err, result) => {
-    if (err) {
-        console.log(err);
-    }
-    console.log(result);
-});
+// });
 
 // Default response for any other request (Not Found). This overrides all others if it is on top of any other get requests, so it needs to be below them.
 app.use((req, res) => {
